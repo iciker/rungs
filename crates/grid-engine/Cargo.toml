@@ -1,0 +1,19 @@
+[package]
+name = "grid-engine"
+version = "0.1.0"
+edition = "2021"
+rust-version.workspace = true
+
+[dependencies]
+binance-client = { path = "../binance-client" }
+db             = { path = "../db" }
+tokio          = { workspace = true }
+anyhow         = { workspace = true }
+tracing        = { workspace = true }
+rust_decimal        = { workspace = true }
+rust_decimal_macros = { workspace = true }
+sqlx           = { workspace = true }
+serde          = { workspace = true }
+
+[dev-dependencies]
+mockito = "1"

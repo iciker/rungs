@@ -1,0 +1,29 @@
+[package]
+name = "web-api"
+version = "0.1.0"
+edition = "2021"
+rust-version.workspace = true
+
+[dependencies]
+axum           = { workspace = true }
+db             = { path = "../db" }
+binance-client = { path = "../binance-client" }
+grid-engine    = { path = "../grid-engine" }
+tokio          = { workspace = true }
+serde          = { workspace = true }
+serde_json     = { workspace = true }
+anyhow         = { workspace = true }
+async-trait    = "0.1"
+thiserror      = { workspace = true }
+tracing        = { workspace = true }
+tower-http     = { workspace = true }
+bcrypt         = { workspace = true }
+jsonwebtoken   = "9"
+rust_decimal   = { workspace = true }
+sqlx           = { workspace = true }
+tower_governor = { version = "0.4", features = ["axum"] }
+
+[dev-dependencies]
+tower               = { workspace = true }
+mockito             = "1"
+rust_decimal_macros = { workspace = true }

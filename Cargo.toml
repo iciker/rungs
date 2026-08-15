@@ -1,0 +1,59 @@
+[workspace]
+members = [
+    "crates/app",
+    "crates/config",
+    "crates/binance-client",
+    "crates/db",
+    "crates/grid-engine",
+    "crates/web-api",
+]
+resolver = "2"
+
+[workspace.package]
+# 由依赖树决定（time 1.88），不是拍脑袋定的。低于此版本时 cargo 会直接报
+# 「requires rustc 1.88」，而不是把用户丢进一堆定位不到源头的编译错误里。
+rust-version = "1.88"
+
+[workspace.dependencies]
+# 异步运行时
+tokio            = { version = "1",    features = ["full"] }
+
+# 序列化
+serde            = { version = "1",    features = ["derive"] }
+serde_json       = "1"
+
+# 错误处理
+anyhow           = "1"
+thiserror        = "2"
+
+# 配置加载
+dotenvy          = "0.15"
+envy             = "0.4"
+
+# 日志
+tracing          = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender   = "0.2"
+
+# 金融精度
+rust_decimal        = { version = "1", features = ["serde-with-str"] }
+rust_decimal_macros = "1"
+
+# HTTP 客户端
+reqwest          = "0.12"
+
+# HMAC 签名
+hmac             = "0.12"
+sha2             = "0.10"
+hex              = "0.4"
+
+# 数据库（PostgreSQL）
+sqlx             = { version = "0.8",  features = ["runtime-tokio", "postgres", "rust_decimal", "chrono", "migrate"] }
+
+# Web 框架
+axum             = { version = "0.7",  features = ["json", "macros"] }
+tower            = { version = "0.5", features = ["util"] }
+tower-http       = { version = "0.5",  features = ["fs"] }
+
+# 密码哈希
+bcrypt           = "0.15"

@@ -1,0 +1,22 @@
+[package]
+name    = "rungs"
+version = "0.1.0"
+edition = "2021"
+rust-version.workspace = true
+
+[[bin]]
+name = "rungs"
+path = "src/main.rs"
+
+[dependencies]
+config             = { path = "../config" }
+binance-client     = { path = "../binance-client" }
+db                 = { path = "../db" }
+grid-engine        = { path = "../grid-engine" }
+web-api            = { path = "../web-api" }
+tokio              = { workspace = true }
+anyhow             = { workspace = true }
+dotenvy            = { workspace = true }
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-appender   = { workspace = true }

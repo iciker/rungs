@@ -1,0 +1,11 @@
+
+.env
+.env.*
+!.env.example
+/target
+**/*.rs.bk
+node_modules/
+/public/dist
+/logs
+crates/*/tests/
+.DS_Store
