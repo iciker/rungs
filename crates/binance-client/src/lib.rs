@@ -217,8 +217,7 @@ impl BinanceClient {
         // 429 = 触发限频，418 = 已被封禁 IP。两者都必须让客户端自己停手，
         // 否则 3 秒一轮的轮询会继续砸过去，把封禁时长一路升级。
         if status.as_u16() == 429 || status.as_u16() == 418 {
-            // Retry-After 的单位是**秒**。缺失时退回 1 秒，而不是 1000
-            //（旧代码 unwrap_or(1000) 后又 ×1000，等于报出 1000 秒的等待）。
+            // Retry-After 的单位是秒；响应未提供该字段时采用 1 秒退避。
             let retry_after_ms = resp
                 .headers()
                 .get("Retry-After")

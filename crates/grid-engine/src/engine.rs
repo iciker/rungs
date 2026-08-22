@@ -380,7 +380,7 @@ impl GridEngine {
 
     /// 拉取历史 K 线并返回 P50 中位数作为 p_floor 的锚点价格。
     ///
-    /// K 线不可用时降级返回 `current_price`（原逻辑，保持稳定性）。
+    /// K 线不可用时使用 `current_price` 作为稳定降级值。
     async fn resolve_anchor(&self, symbol: &str, current_price: Decimal) -> Decimal {
         match self.binance.get_klines(symbol, "1h", 24).await {
             Ok(closes) if !closes.is_empty() => {
@@ -617,7 +617,7 @@ impl GridEngine {
         // 4. 按余额生成新格子。先完整构造并校验，再删除旧格，避免无效布局清空策略。
         let user_id = first.user_id;
         // 使用过去 24H 1H K 线收盘价中位数作为锚点，比瞬时价更稳定
-        // 降级策略：K 线失败时 resolve_anchor 返回当前价（原逻辑），不中断重建
+        // K 线失败时 resolve_anchor 使用当前价，确保重建继续执行
         let anchor = self.resolve_anchor(symbol, current_price).await;
         let p_floor = (anchor / spacing).ceil() * spacing;
 
@@ -728,7 +728,7 @@ impl GridEngine {
         // amount 换算：buy 格的 amount 是计价币花费额，sell 格的是基础币数量，两者单位不同。
         //   buy 成交  → 实际买到 round_quantity(amount / buy_price) 个基础币，卖腿卖这么多
         //   sell 成交 → 实际卖出 amount 个基础币、收回 amount × sell_price 计价币，买腿花这么多
-        // 沿用旧 amount 会让卖腿要求的基础币多于买腿真正买到的，必然 -2010 卡死。
+        // 反向腿使用成交后换算出的对应币种数量，确保订单数量与可用余额一致。
         let filters = self.symbol_filters(&grid.symbol).await?;
         let reverse_amount = if reverse_side == user_grid::GridSide::Sell {
             let bought = grid.amount.checked_div(grid.buy_price).ok_or_else(|| {
@@ -833,9 +833,8 @@ impl GridEngine {
             amount
         };
 
-        // 交易所约束：数量必须是 stepSize 的整数倍、价格必须是 tickSize 的整数倍，
-        // 且名义价值不得低于 minNotional。原实现直接 floor()，等价于假定 stepSize == 1
-        // ——这对 USDCUSDT 恰好成立，但对 BTCUSDT（step 0.00001）会把任何小于 1 BTC 的量抹成 0。
+        // 交易所约束：数量按 stepSize、价格按 tickSize 向下对齐，
+        // 并确保名义价值不低于 minNotional；BTC 等小步长资产必须保留小数数量。
         let filters = self.symbol_filters(&grid.symbol).await?;
         let price = filters.round_price(price);
         if price <= Decimal::ZERO {
@@ -1010,9 +1009,8 @@ impl GridEngine {
         grid: &user_grid::UserGrid,
         open_orders: &[OpenOrder],
     ) -> anyhow::Result<Option<user_grid::UserGrid>> {
-        // open 却没有 order_id 是异常态：正常流转里两者总在同一条 UPDATE 里一起写。
-        // 只有手动编辑或直接改库能造出来。不修复的话这一格永远停在 WaitFill——
-        // 每轮原地返回，既不挂单也不成交，而前端仍显示"运行中"。
+        // open 状态必须携带 order_id，两者在正常流转中由同一条 UPDATE 写入。
+        // 缺少 order_id 时无法对账，重置为 new 后恢复挂单流程。
         let Some(ref order_id) = grid.order_id else {
             warn!(
                 grid_id = grid.id,
